@@ -10,9 +10,7 @@ import Form from "react-bootstrap/Form"
 const LOCAL_STORAGE_KEY = 'todoApp.todos'
 
 function App() {
-  const [todos, setTodos] = useState(() => {
-    return JSON.parse(localStorage.getItem((LOCAL_STORAGE_KEY)) || [])
-  })
+  const [todos, setTodos] = useState([])
   const todoNameRef = useRef()
 
   useEffect(() => {
