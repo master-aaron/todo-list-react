@@ -29,7 +29,7 @@ function App() {
   
   function handleAddTodo(e) {
     const name = todoNameRef.current.value
-    if (name === ' ') return
+    if (String(name).trim() === '') return
     setTodos(prevTodos => {
       return [...prevTodos, { id: uuid(), name: name, complete: false}]
     })
