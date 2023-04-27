@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import TodoList from "./TodoList";
 import uuid from 'react-uuid';
+import axios from 'axios';
 
 import Button from "react-bootstrap/Button";
 import Container from "react-bootstrap/Container";
@@ -14,8 +15,16 @@ function App() {
   const todoNameRef = useRef()
 
   useEffect(() => {
+    let cancel
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todos))
-  }, [todos])
+    axios.get("http://localhost:3000/", {
+      cancelToken: new axios.CancelToken(c => cancel = c)
+    }).then(res => {
+      console.log(res.data)
+    }).catch(err => {
+      console.log('error')
+    })
+  })
 
   function toggleTodo(id) {
     const newTodos = [...todos]
