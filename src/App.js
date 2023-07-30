@@ -8,71 +8,89 @@ import Container from "react-bootstrap/Container";
 import InputGroup from "react-bootstrap/InputGroup";
 import Form from "react-bootstrap/Form"
 
-const LOCAL_STORAGE_KEY = 'todoApp.todos'
-
 function App() {
-  const [todos, setTodos] = useState(JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [])
-  const todoNameRef = useRef()
+	const [todos, setTodos] = useState([])
+	const todoNameRef = useRef()
 
-  useEffect(() => {
-    let cancel
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todos))
-    axios.get("http://localhost:3000/", {
-      cancelToken: new axios.CancelToken(c => cancel = c)
-    }).then(res => {
-      console.log(res.data)
-    }).catch(err => {
-      console.log('error')
-    })
-  })
+	useEffect(() => {
+		axios.get("http://localhost:4000/api/todos").then(res => {
+			console.log(res.data)
+			setTodos(res.data);
+		}).catch(err => {
+			console.log('error')
+		})
+	})
 
-  function toggleTodo(id) {
-    const newTodos = [...todos]
-    const todo = newTodos.find(todo => todo.id === id)
-    todo.complete = !todo.complete
-    setTodos(newTodos)
-  }
+	function toggleTodo(id) {
+		let newTodos = [...todos]
+		const todoToToggle = newTodos.find(todo => todo.id === id)
+		todoToToggle.complete = !todoToToggle.complete
 
-  
-  function handleAddTodo(e) {
-    const name = todoNameRef.current.value
-    if (String(name).trim() === '') return
-    setTodos(prevTodos => {
-      return [...prevTodos, { id: uuid(), name: name, complete: false}]
-    })
-    todoNameRef.current.value = null
-  }
+		axios.put("http://localhost:4000/api/todos/" + id, todoToToggle).then(res => {
+				console.log(res.data)
+			}).catch(err => {
+				console.log(err)
+			});
+	}
+	
+	function handleAddTodo(e) {
+		const name = todoNameRef.current.value
+		if (String(name).trim() === '') return
 
-  function handleClearTodos() {
-    const newTodos = todos.filter(todo => !todo.complete)
-    setTodos(newTodos)
-  }
-   
-  function handleClearAll() {
-    const newTodos = []
-    setTodos(newTodos)
-  }
+		const newTodo = {id: uuid(), name: name, complete: false};
 
-  return (
-    <Container className="d-flex justify-content-center flex-column mt-5">
-      <div className="text-center fw-bold text-light fs-1 mb-3">Todo List</div>
-      <TodoList todos={todos} toggleTodo={toggleTodo}/>
-      <InputGroup className="mb-3">
-        <Form.Control
-          placeholder="Todo Item"
-          ref={todoNameRef}
-        />
-        <Button variant='primary' onClick={handleAddTodo}>Add Todo</Button>
-      </InputGroup>
-      
-      <div className="d-flex justify-content-center mb-2">
-        <Button className='me-1' variant='primary' onClick={handleClearTodos}>Clear Complete</Button>
-        <Button variant='secondary' onClick={handleClearAll}>Clear All</Button>
-      </div>
+		axios.post("http://localhost:4000/api/todos", newTodo)
+		.then(res => {
+			console.log(res.data)
+		}).catch(err => {
+			console.log(err)
+		});
 
-      <div className="text-center text-light">{todos.filter(todo => !todo.complete).length} left to do</div>
-    </Container>
-  ) 
+		todoNameRef.current.value = null
+	}
+
+	function handleClearTodos() {
+		const completedTodos = todos.filter(todo => todo.complete)
+		
+		for(const todoToDelete of completedTodos) {
+		axios.delete("http://localhost:4000/api/todos" + todoToDelete.id)
+		.then(res => {
+			console.log(res.data)
+		}).catch(err => {
+			console.log(err)
+		});
+		}
+	}
+	 
+	function handleClearAll() {
+		axios.delete("http://localhost:4000/api/todos")
+		.then(res => {
+			console.log(res.data)
+		}).catch(err => {
+			console.log(err)
+		});
+	}
+
+	return (
+		<Container className="d-flex justify-content-center flex-column mt-5">
+			<div className="text-center fw-bold text-light fs-1 mb-3">Todo List</div>
+			<TodoList todos={todos} toggleTodo={toggleTodo}/>
+			<InputGroup className="mb-3">
+				<Form.Control
+					placeholder="Todo Item"
+					ref={todoNameRef}
+				/>
+				<Button variant='primary' onClick={handleAddTodo}>Add Todo</Button>
+			</InputGroup>
+			
+			<div className="d-flex justify-content-center mb-2">
+				<Button className='me-1' variant='primary' onClick={handleClearTodos}>Clear Complete</Button>
+				<Button variant='secondary' onClick={handleClearAll}>Clear All</Button>
+			</div>
+
+			<div className="text-center text-light">{todos.filter(todo => !todo.complete).length} left to do</div>
+		</Container>
+	) 
 }
 
 export default App;
